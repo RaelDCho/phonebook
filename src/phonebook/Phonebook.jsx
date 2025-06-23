@@ -55,9 +55,6 @@ function Phonebook() {
             // alertMessage = `\'${newName}\' already exists in the phonebook`;
 
             if (window.confirm(`\'${newName}\' already exists in the phonebook, do you wish to update the details?`)) {
-                // add update function here
-                // const p = persons.find(p => p.id === newPerson.id);
-                // console.log(`person.id: ${newPerson.id}`)
                 updatePerson(newName);
                 console.log(`Successfully updated \'${newName}\'`);
                 alertMessage = `\'${newName}\''s details were successfully updated`;
