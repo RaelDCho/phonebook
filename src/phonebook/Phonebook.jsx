@@ -7,18 +7,19 @@ import personService from '../services/Persons.js';
 import List from "./List";
 import Form from "./Form";
 import Search from "./Search";
+import Notification from "./Notification.jsx";
 
 function Phonebook() {
     /* 
         useState functions
     */
-    const [persons, setPersons] = useState([
-        { name: 'Arto Hellas', number: '040-123456', id: 1 }
-    ]);
+    const [persons, setPersons] = useState([]);
 
     const [newName, setNewName] = useState('');
     const [newNumber, setNewNumber] = useState('');
     const [searchName, setSearchName] = useState('');
+
+    const [errorMessage, setErrorMessage] = useState(null);
 
     /* 
         axios to connect to json server for backend
@@ -45,8 +46,6 @@ function Phonebook() {
             id: (persons.length + 1).toString()
         }
 
-        let alertMessage = ``;
-
         // search if person name is already in the array
         // if person has been found ask user if they want to update with new details (new number)
         // using windows.confirm (like in removePerson function)
@@ -57,9 +56,9 @@ function Phonebook() {
             if (window.confirm(`\'${newName}\' already exists in the phonebook, do you wish to update the details?`)) {
                 updatePerson(newName);
                 console.log(`Successfully updated \'${newName}\'`);
-                alertMessage = `\'${newName}\''s details were successfully updated`;
+                updateMessage(2, newName);
             } else {
-                alertMessage = `\'${newName}\''s details were not updated`;
+                updateMessage(3, newName);
             }
         } else {
             // add person to the array
@@ -71,10 +70,9 @@ function Phonebook() {
             })
 
             console.log('newPerson is: ', newPerson);
-            alertMessage = `\'${newName}\' has been added to the phonebook`;
+            updateMessage(1, newName);
         }
         
-        alert(alertMessage);
         setNewName('');
         setNewNumber('');
         return;
@@ -89,9 +87,48 @@ function Phonebook() {
         const changedPerson = {...person, number: newNumber};
         personService.update(person.id, changedPerson).then(returnedPerson => {
             setPersons(persons.map(person => person.name === personName ? returnedPerson : person));
+        }).catch(error => {
+            updateMessage(5, person.name);
+            setPersons(persons.filter(p => p.name !== person.name));
         })
 
         return;
+    }
+
+    /* 
+        Function for timeout message
+    */
+    function updateMessage(type, name) {
+        /*
+            1: added user
+            2: existing user, updated user
+            3: existing user, did not update
+            4: removed user
+            5: notification of conflicting errors
+            default: log error message and return
+        */
+        switch(type) {
+            case 1:
+                setErrorMessage(`successfully added \'${name}\'`);
+                break;
+            case 2:
+                setErrorMessage(`\'${name}\''s details were successfully updated`);
+                break;
+            case 3:
+                setErrorMessage(`details of \'${name}\' were not updated`);
+                break;
+            case 4:
+                setErrorMessage(`successfully removed \'${name}\'`);
+                break;
+            case 5:
+                setErrorMessage(`${name} has already been deleted from server`);
+                break;
+            default:
+                console.log('error on updateMessage');
+                break;
+        }
+
+        setTimeout(() => {setErrorMessage(null)}, 5000);
     }
 
     /* 
@@ -111,6 +148,10 @@ function Phonebook() {
 
                 // delete from db
                 personService.remove(personId);
+
+                // message
+                updateMessage(4, deletePerson.name);
+
                 return;
             }
         }
@@ -137,6 +178,7 @@ function Phonebook() {
                 <Form addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange}/>
                 <Search search={searchName} change={handleSearchChange}/>
                 <List persons={persons} search={searchName} remove={removePerson}/>
+                <Notification message={errorMessage} />
             </div>
         </>
     )
