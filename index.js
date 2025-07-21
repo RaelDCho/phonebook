@@ -1,7 +1,11 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
 
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: false }))
+
+app.use(bodyParser.json()); // undefined still
+app.use(express.Router());
 
 const days = [
   "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
@@ -40,19 +44,23 @@ let persons = [
 //     // response.end('Hello World!');
 // });
 
+// post
 app.post('/persons', (request, response) => {
   const person = request.body;
-  console.log(person);
+  console.log(`Person: ${person}`);
   response.json(person);
 
   // generate a new ID using math.random
+  const newId = Math.floor(Math.random() * 10000);
 })
 
+// Get front page
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>');
 })
 
-app.get('/persons', (request, response) => {
+// Get all 
+app.get('/api/persons', (request, response) => {
   response.json(persons);
 })
 
@@ -74,12 +82,15 @@ app.get('/persons/:id', (request, response) => {
     
 })
 
-app.delete('/persons/:id', (request, response) => {
+
+// Delete
+app.delete('/api/persons/:id', (request, response) => {
   const id = request.params.id;
   const person = persons.filter(person => person.id !== id);
   response.status(204).end();
 })
 
+// Overall info
 app.get('/info', (request, response) => {
   const d = new Date();
   const currentDateandTime = `${days[d.getDay()]} of ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} Time: ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
