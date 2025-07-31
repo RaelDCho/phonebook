@@ -1,11 +1,21 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+// const bodyParser = require('body-parser');
 const app = express();
 
-app.use(bodyParser.urlencoded({ extended: false }))
+// const jsonParser = bodyParser.json();
+// const urlEncodedParser = (bodyParser.urlencoded({ extended: false }))
 
-app.use(bodyParser.json()); // undefined still
-app.use(express.Router());
+// app.use(require('connect').bodyParser.json()); // undefined still
+// app.use(bodyParser.urlencoded({ extended: false }));
+
+// app.use(express.json());
+
+app.use((req, res, next) => {
+  express.json()(req, res, (err) => {
+    if (!req.body) req.body = {};
+    next(err);
+  });
+});
 
 const days = [
   "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
@@ -44,14 +54,36 @@ let persons = [
 //     // response.end('Hello World!');
 // });
 
-// post
-app.post('/persons', (request, response) => {
-  const person = request.body;
-  console.log(`Person: ${person}`);
-  response.json(person);
+// fucntion to generate a random ID using math.random
+const generateId = () => {
+  return Math.floor(Math.random() * 10000);
+}
 
-  // generate a new ID using math.random
-  const newId = Math.floor(Math.random() * 10000);
+// post
+app.post('/api/persons', (request, response) => {
+  const body = request.body;
+
+  if (!body.name || !body.number) {
+    return response.status(400).json({
+      error: 'content missing'
+    });
+  }
+
+  if (persons.find(person => person.name === body.name)) {
+    return response.status(400).json({
+      error:'name must be unique'
+    });
+  }
+
+  const person = {
+    id: generateId().toString(),
+    name: body.name,
+    number: body.number
+  }
+
+  persons = persons.concat(person);
+
+  response.json(person);
 })
 
 // Get front page
